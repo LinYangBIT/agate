@@ -1,5 +1,3 @@
-import math
-
 from agate.aggregations.base import Aggregation
 from agate.aggregations.has_nulls import HasNulls
 from agate.data_types import Number
@@ -56,15 +54,16 @@ class Percentiles(Aggregation):
         quantiles = [data[0]]
 
         for percentile in range(1, 100):
-            k = len(data) * (float(percentile) / 100)
+            # Keep the rank scaled by 100 to avoid rounding integer boundaries.
+            k = len(data) * percentile
 
-            low = max(1, int(math.ceil(k)))
-            high = min(len(data), int(math.floor(k + 1)))
+            low = max(1, (k + 99) // 100)
+            high = min(len(data), k // 100 + 1)
 
-            # No remainder
+            # Fractional rank: select the next datum.
             if low == high:
                 value = data[low - 1]
-            # Remainder
+            # Integer rank: average the adjacent data.
             else:
                 value = (data[low - 1] + data[high - 1]) / 2
 

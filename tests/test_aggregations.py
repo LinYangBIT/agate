@@ -563,6 +563,29 @@ class TestNumberAggregation(unittest.TestCase):
     def test_percentiles_all_nulls(self):
         self.assertEqual(Percentiles('four').run(self.table), Quantiles([None] * 101))
 
+    def test_percentiles_integer_rank_boundaries(self):
+        table = Table([(n,) for n in range(100)], ['ints'], [self.number_type])
+
+        percentiles = table.aggregate(Percentiles('ints'))
+
+        self.assertEqual(percentiles[0], Decimal(0))
+        self.assertEqual(percentiles[100], Decimal(99))
+        for percentile in range(1, 100):
+            with self.subTest(percentile=percentile):
+                self.assertEqual(percentiles[percentile], Decimal(percentile) - Decimal('0.5'))
+
+    def test_percentiles_small_inputs(self):
+        cases = (
+            ([], [None] * 101),
+            ([42], [42] * 101),
+            ([10, 20], [10] * 50 + [15] + [20] * 50),
+            ([10, 20, 30], [10] * 34 + [20] * 33 + [30] * 34),
+        )
+        for values, expected in cases:
+            with self.subTest(values=values):
+                table = Table([(n,) for n in values], ['ints'], [self.number_type])
+                self.assertEqual(table.aggregate(Percentiles('ints')), Quantiles(expected))
+
     def test_percentiles_locate(self):
         rows = [(n,) for n in range(1, 1001)]
 

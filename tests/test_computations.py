@@ -361,6 +361,13 @@ class TestTableComputation(unittest.TestCase):
         self.assertIsInstance(new_table.columns['percentiles'][0], Decimal)
         self.assertIsInstance(new_table.columns['percentiles'][-1], Decimal)
 
+    def test_percentile_rank_integer_boundary(self):
+        table = Table([(n,) for n in range(100)], ['ints'], [self.number_type])
+        new_table = table.compute([('percentiles', PercentileRank('ints'))])
+
+        self.assertEqual(new_table.rows[28]['percentiles'], Decimal(28))
+        self.assertEqual(new_table.rows[29]['percentiles'], Decimal(29))
+
     def test_percentile_rank_null(self):
         """Null values must not crash PercentileRank; they yield a null rank.
 
